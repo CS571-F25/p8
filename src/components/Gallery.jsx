@@ -4,8 +4,7 @@ import { Container, Row, Col, Card, Button, Modal } from "react-bootstrap";
 export default function Gallery() {
 
   const [photos, setPhotos] = useState([]);
-  const [likedDelta, setLikedDelta] = useState({}); // { photoId: 1 }
-
+  const [likedDelta, setLikedDelta] = useState({});
   const [showPreview, setShowPreview] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState(null);
 
@@ -13,8 +12,7 @@ export default function Gallery() {
     try {
       const raw = localStorage.getItem("likedPhotosDelta");
       if (!raw) return {};
-      const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === "object" ? parsed : {};
+      return JSON.parse(raw);
     } catch {
       return {};
     }
@@ -24,8 +22,7 @@ export default function Gallery() {
     try {
       const raw = localStorage.getItem("userPhotos");
       if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      return JSON.parse(raw);
     } catch {
       return [];
     }
@@ -33,59 +30,55 @@ export default function Gallery() {
 
   useEffect(() => {
     const storedDelta = loadLikedDelta();
-    setLikedDelta(storedDelta);
-
     const localPhotos = loadUserPhotos();
+    setLikedDelta(storedDelta);
 
     fetch("https://cs571api.cs.wisc.edu/rest/f25/bucket/photo", {
       headers: {
-        "X-CS571-ID": "bid_742c7c820564c4b9c731a52b47f87e522fd204a29950136f736656186cecefd3"
+        "X-CS571-ID":
+          "bid_742c7c820564c4b9c731a52b47f87e522fd204a29950136f736656186cecefd3"
       }
     })
-      .then(res => res.json())
-      .then(data => {
-        const apiPhotos = Object.values(data.results).flat();
+      .then((res) => res.json())
+      .then((data) => {
+        const apiPhotos = Object.values(data.results)
+          .flatMap((group) => Object.values(group));
 
-        const combined = [...localPhotos, ...apiPhotos].map(p => {
-          const delta = storedDelta[p.id] ?? 0;
-          return {
-            ...p,
-            likes: (p.likes ?? 0) + delta
-          };
-        });
+        const combined = [...localPhotos, ...apiPhotos].map((p) => ({
+          ...p,
+          likes: (p.likes ?? 0) + (storedDelta[p.id] ?? 0)
+        }));
 
         setPhotos(combined);
       })
-      .catch(err => console.error(err));
+      .catch((err) => console.error(err));
   }, []);
+
 
   const handleLike = (photoId) => {
     if (!photoId) return;
 
-    setLikedDelta(prev => {
+    setLikedDelta((prev) => {
       const currentlyLiked = !!prev[photoId];
       const updated = { ...prev };
-      const deltaChange = currentlyLiked ? -1 : 1;
 
-      if (currentlyLiked) {
-        delete updated[photoId];
-      } else {
-        updated[photoId] = 1;
-      }
+      const change = currentlyLiked ? -1 : 1;
+
+      if (currentlyLiked) delete updated[photoId];
+      else updated[photoId] = 1;
 
       localStorage.setItem("likedPhotosDelta", JSON.stringify(updated));
 
-      setPhotos(old =>
-        old.map(p =>
-          p.id === photoId
-            ? { ...p, likes: (p.likes ?? 0) + deltaChange }
-            : p
+      setPhotos((old) =>
+        old.map((p) =>
+          p.id === photoId ? { ...p, likes: (p.likes ?? 0) + change } : p
         )
       );
 
       return updated;
     });
   };
+
 
   const handlePreview = (photo) => {
     if (!photo?.url) return;
@@ -98,19 +91,19 @@ export default function Gallery() {
     setPreviewPhoto(null);
   };
 
+
   const handleDelete = (photoId) => {
     if (!photoId) return;
 
-    const ok = window.confirm("Delete this photo from your local uploads?");
-    if (!ok) return;
+    if (!window.confirm("Delete this photo from your local uploads?")) return;
 
     const existing = loadUserPhotos();
-    const updatedLocal = existing.filter(p => p.id !== photoId);
+    const updatedLocal = existing.filter((p) => p.id !== photoId);
     localStorage.setItem("userPhotos", JSON.stringify(updatedLocal));
 
-    setPhotos(prev => prev.filter(p => p.id !== photoId));
+    setPhotos((prev) => prev.filter((p) => p.id !== photoId));
 
-    setLikedDelta(prev => {
+    setLikedDelta((prev) => {
       if (!prev[photoId]) return prev;
       const newDelta = { ...prev };
       delete newDelta[photoId];
@@ -119,12 +112,15 @@ export default function Gallery() {
     });
   };
 
+
   const isLocalPhoto = (photo) =>
-    photo.source === "local" || (typeof photo.id === "string" && photo.id.startsWith("local-"));
+    photo.source === "local" ||
+    (typeof photo.id === "string" && photo.id.startsWith("local-"));
+
 
   return (
     <Container className="mt-4">
-      <h1 className="mb-4">Gallery</h1>
+      <h1 className="mb-4"  style={{ fontFamily: "'Playfair Display', serif" }}>Gallery</h1>
 
       {photos.length === 0 ? (
         <p>No photos loaded…</p>
@@ -140,10 +136,7 @@ export default function Gallery() {
                 lg={3}
                 className="mb-4 d-flex"
               >
-                <Card
-                  className="shadow-sm w-100"
-                  style={{ borderRadius: "8px", overflow: "hidden" }}
-                >
+                <Card className="shadow-sm w-100" style={{ borderRadius: "8px", overflow: "hidden" }}>
                   <Card.Img
                     variant="top"
                     src={photo.url}
@@ -156,7 +149,8 @@ export default function Gallery() {
                   />
 
                   <Card.Body>
-                    <Card.Text>{photo.description}</Card.Text>
+                    <Card.Text style={{ fontWeight: 600 }}>{photo.description}</Card.Text>
+
                     <div className="text-muted" style={{ fontSize: "0.9rem" }}>
                       {photo.category}
                     </div>
@@ -195,12 +189,7 @@ export default function Gallery() {
             ))}
           </Row>
 
-          <Modal
-            show={showPreview}
-            onHide={handleClosePreview}
-            size="lg"
-            centered
-          >
+          <Modal show={showPreview} onHide={handleClosePreview} size="lg" centered>
             <Modal.Header closeButton>
               <Modal.Title>Photo Preview</Modal.Title>
             </Modal.Header>
@@ -213,14 +202,13 @@ export default function Gallery() {
                     maxWidth: "100%",
                     maxHeight: "70vh",
                     objectFit: "contain",
-                    borderRadius: "8px"
+                    borderRadius: "8px",
+
                   }}
                 />
               )}
               {previewPhoto?.description && (
-                <div className="mt-2 text-muted">
-                  {previewPhoto.description}
-                </div>
+                <div className="mt-2 text-muted">{previewPhoto.description}</div>
               )}
             </Modal.Body>
           </Modal>

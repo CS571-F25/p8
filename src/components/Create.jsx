@@ -3,7 +3,6 @@ import { Container, Row, Col, Card, Form, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 export default function Create() {
-
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [desc, setDesc] = useState("");
@@ -15,8 +14,7 @@ export default function Create() {
     try {
       const raw = localStorage.getItem("userPhotos");
       if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      return JSON.parse(raw);
     } catch {
       return [];
     }
@@ -39,9 +37,7 @@ export default function Create() {
       const img = new Image();
       const reader = new FileReader();
 
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
+      reader.onload = (e) => (img.src = e.target.result);
       reader.onerror = reject;
 
       img.onload = () => {
@@ -66,12 +62,10 @@ export default function Create() {
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
 
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
-        resolve(dataUrl);
+        resolve(canvas.toDataURL("image/jpeg", quality));
       };
 
       img.onerror = reject;
-
       reader.readAsDataURL(file);
     });
   };
@@ -88,7 +82,6 @@ export default function Create() {
 
     try {
       const dataUrl = await compressImageToDataUrl(file);
-
       const existing = loadUserPhotos();
 
       const newPhoto = {
@@ -97,60 +90,71 @@ export default function Create() {
         description: desc,
         category: cat || "User Upload",
         likes: 0,
-        source: "local"
+        source: "local",
       };
 
       const updated = [...existing, newPhoto];
 
       try {
         localStorage.setItem("userPhotos", JSON.stringify(updated));
-      } catch (err) {
-        console.error(err);
-        alert(
-          "Your browser storage is full. Try removing some uploads or using a smaller image."
-        );
+      } catch {
+        alert("Storage is full! Try deleting some photos.");
         setUploading(false);
         return;
       }
 
-      alert("Photo saved locally! It will now appear in your Gallery.");
-
+      alert("Photo saved locally! It will appear in your Gallery.");
       setFile(null);
       setPreviewUrl(null);
       setDesc("");
       setCat("");
-      setUploading(false);
 
       navigate("/gallery");
     } catch (err) {
       console.error(err);
-      alert("Failed to process the image file.");
+      alert("Failed to process the image.");
+    } finally {
       setUploading(false);
     }
   };
 
+  const ACCENT = "#3A4F39";
+
+  const buttonStyle = {
+    background: "black",
+    border: "1px solid black",
+    fontFamily: "Inter, sans-serif",
+    fontSize: "12px",
+    letterSpacing: "1px",
+    padding: "10px",
+    height: "42px",
+    transition: "all 0.25s",
+  };
+
+  const buttonHover = {
+    background: ACCENT,
+    borderColor: ACCENT,
+  };
+
   return (
-    <Container fluid className="mt-4">
+    <Container fluid className="mt-4" style={{ fontFamily: "Inter, sans-serif" }}>
       <Row className="justify-content-center">
         <Col xs={12} md={8} lg={6} xl={5}>
 
-          <h1 className="mb-3">Upload Photo</h1>
+          <h1 className="mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Upload Photo
+          </h1>
 
-          <p className="text-muted">
-  Upload your own photos to make this gallery yours. They’re saved only in this browser
-  and will appear in your Gallery as compressed previews.
+          <p className="text-muted" style={{ fontSize: "14px" }}>
+            Upload your own photos to personalize your gallery.  
+            Your uploads stay **only in this browser** and are never sent to a server.
           </p>
 
           <Card className="p-3 shadow-sm mt-3 w-100">
             <Form onSubmit={handleUpload}>
-
               <Form.Group className="mb-3">
                 <Form.Label>Photo File</Form.Label>
-                <Form.Control
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
+                <Form.Control type="file" accept="image/*" onChange={handleFileChange} />
               </Form.Group>
 
               {previewUrl && (
@@ -158,12 +162,12 @@ export default function Create() {
                   <div className="mb-2 fw-semibold">Preview</div>
                   <img
                     src={previewUrl}
-                    alt="Preview"
+                    alt="preview"
                     style={{
                       maxWidth: "100%",
-                      maxHeight: "240px",
+                      maxHeight: "260px",
                       objectFit: "cover",
-                      borderRadius: "8px"
+                      borderRadius: "8px",
                     }}
                   />
                 </div>
@@ -183,7 +187,6 @@ export default function Create() {
               <Form.Group className="mb-3">
                 <Form.Label>Category</Form.Label>
                 <Form.Control
-                  type="text"
                   value={cat}
                   onChange={(e) => setCat(e.target.value)}
                   placeholder="e.g. Landscape, Portrait, Street…"
@@ -191,17 +194,17 @@ export default function Create() {
               </Form.Group>
 
               <Button
-                variant="primary"
                 type="submit"
-                className="w-100"
                 disabled={uploading}
+                style={buttonStyle}
+                onMouseEnter={(e) => Object.assign(e.target.style, buttonHover)}
+                onMouseLeave={(e) => Object.assign(e.target.style, buttonStyle)}
+                className="w-100"
               >
                 {uploading ? "Saving…" : "Save to Gallery"}
               </Button>
-
             </Form>
           </Card>
-
         </Col>
       </Row>
     </Container>
