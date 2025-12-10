@@ -3,6 +3,9 @@ import { useState } from "react";
 
 export default function NavBar() {
   const location = useLocation();
+  const [open, setOpen] = useState(false);
+
+  const ACTIVE_COLOR = "#3A4F39";
 
   const navItems = [
     { path: "/", label: "HOME" },
@@ -10,100 +13,120 @@ export default function NavBar() {
     { path: "/create", label: "UPLOAD" }
   ];
 
-  const ACTIVE_COLOR = "#3A4F39";
-
-  const styles = {
-    navContainer: {
-      width: "100%",
-      height: "68px",       
-      display: "flex",
-      alignItems: "center",
-      padding: "0 32px",       
-      background: "white",
-      borderBottom: "1px solid #ddd",
-      position: "sticky",
-      top: 0,
-      zIndex: 50
-    },
-    logo: {
-      fontFamily: "'Playfair Display', serif",
-      fontSize: "28px",        
-      fontWeight: 700,
-      letterSpacing: "0.5px",
-      color: "#222",
-      textTransform: "uppercase",
-    },
-    spacer: { flex: 1 },
-    navLinks: {
-      display: "flex",
-      gap: "28px"             
-    },
-    linkContainer: {
-      position: "relative",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center"
-    },
-    link: {
-      fontFamily: "Inter, sans-serif",
-      fontSize: "12px",       
-      letterSpacing: "1.5px",  
-      color: "#444",
-      textDecoration: "none",
-      paddingBottom: "4px",
-      transition: "color 0.25s"
-    },
-    underline: {
-      height: "2px",
-      width: "0%",
-      background: "#ccc",
-      transition: "width 0.25s ease"
-    },
-    underlineActive: {
-      width: "100%",
-      background: ACTIVE_COLOR
-    }
-  };
-
   return (
-    <nav style={styles.navContainer}>
-      <div style={styles.logo}>PhotoSphere</div>
+    <>
+      <nav
+        style={{
+          width: "100%",
+          height: "72px",
+          background: "white",
+          borderBottom: "1px solid #ddd",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 24px",
+          position: "sticky",
+          top: 0,
+          zIndex: 300
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: "28px",
+            fontWeight: 700,
+            color: ACTIVE_COLOR,
+            textTransform: "uppercase"
+          }}
+        >
+          PhotoSphere
+        </div>
 
-      <div style={styles.spacer}></div>
+        <div
+          className="mobile-icon"
+          onClick={() => setOpen(true)}
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px"
+          }}
+        >
+          <div style={{ width: "28px", height: "3px", background: ACTIVE_COLOR }}></div>
+          <div style={{ width: "28px", height: "3px", background: ACTIVE_COLOR }}></div>
+          <div style={{ width: "28px", height: "3px", background: ACTIVE_COLOR }}></div>
+        </div>
+      </nav>
 
-      <div style={styles.navLinks}>
-        {navItems.map((item) => {
-          const active = location.pathname === item.path;
-          const [hover, setHover] = useState(false);
+     
+      <div
+        style={{
+          position: "fixed",
+          top: open ? "0" : "-60vh",   
+          left: 0,
+          width: "100%",
+          height: "35vh",             
+          background: "white",
+          boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
+          transition: "top 0.35s ease",
+          zIndex: 500,
+          padding: "32px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center"
+        }}
+      >
+        <div
+          onClick={() => setOpen(false)}
+          style={{
+            position: "absolute",
+            top: "24px",
+            right: "28px",
+            fontSize: "32px",
+            cursor: "pointer",
+            color: ACTIVE_COLOR
+          }}
+        >
+          ✕
+        </div>
 
-          return (
-            <div
-              key={item.path}
-              style={styles.linkContainer}
-              onMouseEnter={() => setHover(true)}
-              onMouseLeave={() => setHover(false)}
-            >
+        <div
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: "48px",
+            fontWeight: 700,
+            color: ACTIVE_COLOR,
+            marginTop: "40px",
+            marginBottom: "40px",
+            textTransform: "uppercase"
+          }}
+        >
+          PhotoSphere
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "26px" }}>
+          {navItems.map((item) => {
+            const active = location.pathname === item.path;
+            return (
               <Link
+                key={item.path}
                 to={item.path}
+                onClick={() => setOpen(false)}
                 style={{
-                  ...styles.link,
-                  ...(active ? { color: ACTIVE_COLOR, fontWeight: 500 } : {})
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "20px",
+                  textDecoration: "none",
+                  letterSpacing: "1.5px",
+                  color: active ? ACTIVE_COLOR : "#333",
+                  fontWeight: active ? 600 : 400
                 }}
               >
                 {item.label}
               </Link>
-
-              <div
-                style={{
-                  ...styles.underline,
-                  ...(hover && !active ? { width: "100%" } : {}),
-                  ...(active ? styles.underlineActive : {})
-                }}
-              />
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </nav>
+    </>
   );
 }
